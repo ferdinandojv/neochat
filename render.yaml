@@ -33,16 +33,12 @@ services:
 
   - type: pserv
     name: neochat-postgres
-    ipAllowList: []
     plan: free
     postgresVersion: "16"
     initialDatabase: neochat
     user: neochat_user
-    password:
-      generateValue: true
 
   - type: redis
     name: neochat-redis
-    ipAllowList: []
     plan: free
     maxmemoryPolicy: allkeys-lru
