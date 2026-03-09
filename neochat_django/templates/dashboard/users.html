@@ -1,0 +1,72 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Usuários - NeoChat{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Gerenciar Usuários</h2>
+    <div class="page-actions">
+        <a href="{% url 'user-create' %}" class="btn btn-primary">+ Novo Usuário</a>
+    </div>
+</div>
+
+<div class="card">
+    <form method="get" class="search-form">
+        <input type="text" name="search" placeholder="Buscar por nome ou username..." value="{{ request.GET.search }}" />
+        <button type="submit">Buscar</button>
+    </form>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user_obj in users %}
+            <tr>
+                <td><strong>{{ user_obj.username }}</strong></td>
+                <td>{{ user_obj.get_full_name|default:"-" }}</td>
+                <td>{{ user_obj.email|default:"-" }}</td>
+                <td><span class="badge badge-{{ user_obj.role }}">{{ user_obj.get_role_display }}</span></td>
+                <td>
+                    <span class="badge {% if user_obj.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                        {% if user_obj.is_active %}Ativo{% else %}Inativo{% endif %}
+                    </span>
+                    <span class="badge badge-status-{{ user_obj.status }}">{{ user_obj.get_status_display }}</span>
+                </td>
+                <td>
+                    <a href="{% url 'user-detail' user_obj.pk %}" class="btn-link">Ver</a>
+                    <a href="{% url 'user-edit' user_obj.pk %}" class="btn-link">Editar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Nenhum usuário encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">&laquo; Primeira</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Anterior</a>
+        {% endif %}
+        
+        <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Próxima</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Última &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

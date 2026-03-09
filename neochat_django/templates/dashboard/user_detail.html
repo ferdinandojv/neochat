@@ -1,0 +1,71 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}{{ user_obj.username }} - Detalhes - NeoChat{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Detalhes do Usuário</h2>
+    <div class="page-actions">
+        <a href="{% url 'user-edit' user_obj.pk %}" class="btn btn-primary">Editar</a>
+        <a href="{% url 'user-delete' user_obj.pk %}" class="btn btn-danger">Deletar</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="detail-grid">
+        <div class="detail-item">
+            <span class="detail-label">Username</span>
+            <span class="detail-value">{{ user_obj.username }}</span>
+        </div>
+
+        <div class="detail-item">
+            <span class="detail-label">Nome Completo</span>
+            <span class="detail-value">{{ user_obj.get_full_name|default:"-" }}</span>
+        </div>
+
+        <div class="detail-item">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ user_obj.email|default:"-" }}</span>
+        </div>
+
+        <div class="detail-item">
+            <span class="detail-label">Telefone</span>
+            <span class="detail-value">{{ user_obj.phone|default:"-" }}</span>
+        </div>
+
+        <div class="detail-item">
+            <span class="detail-label">Role</span>
+            <span class="detail-value">
+                <span class="badge badge-{{ user_obj.role }}">{{ user_obj.get_role_display }}</span>
+            </span>
+        </div>
+
+        <div class="detail-item">
+            <span class="detail-label">Status Atual</span>
+            <span class="detail-value">
+                <span class="badge badge-status-{{ user_obj.status }}">{{ user_obj.get_status_display }}</span>
+            </span>
+        </div>
+
+        <div class="detail-item">
+            <span class="detail-label">Status Conta</span>
+            <span class="detail-value">
+                <span class="badge {% if user_obj.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                    {% if user_obj.is_active %}Ativo{% else %}Inativo{% endif %}
+                </span>
+            </span>
+        </div>
+
+        <div class="detail-item">
+            <span class="detail-label">Data de Cadastro</span>
+            <span class="detail-value">{{ user_obj.date_joined|date:"d/m/Y H:i" }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Conversas Atribuídas</h3>
+    <p>Total: {{ user_obj.assigned_conversations.count }}</p>
+    <a href="{% url 'conversations' %}?assigned_to={{ user_obj.pk }}" class="btn btn-secondary">Ver Conversas</a>
+</div>
+{% endblock %}

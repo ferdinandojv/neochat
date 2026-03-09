@@ -1,0 +1,218 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Templates WhatsApp - NeoChat{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Enviar Templates WhatsApp</h2>
+</div>
+
+{% if not whatsapp_enabled %}
+<div class="card warning-box">
+    <strong>⚠️ WhatsApp não configurado</strong>
+    <p>Configure as credenciais do WhatsApp Business API no arquivo .env para utilizar esta funcionalidade.</p>
+</div>
+{% endif %}
+
+<div class="template-layout">
+    <div class="card">
+        <h3>Selecionar Conversa</h3>
+        <form id="templateForm" class="form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="conversation_id">Conversa WhatsApp</label>
+                <select name="conversation_id" id="conversation_id" required>
+                    <option value="">Selecione uma conversa...</option>
+                    {% for conv in conversations %}
+                    <option value="{{ conv.id }}" {% if request.GET.conversation == conv.id|stringformat:"s" %}selected{% endif %}>
+                        #{{ conv.id }} - {{ conv.customer_name }} ({{ conv.customer_phone }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="template_name">Nome do Template</label>
+                <select name="template_name" id="template_name" required>
+                    <option value="">Selecione um template...</option>
+                    <option value="hello_world">Hello World (Teste)</option>
+                    <option value="appointment_reminder">Lembrete de Consulta</option>
+                    <option value="appointment_confirmation">Confirmação de Agendamento</option>
+                    <option value="exam_ready">Resultado de Exame</option>
+                    <option value="vaccine_reminder">Lembrete de Vacina</option>
+                    <option value="pet_birthday">Aniversário do Pet</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="language_code">Idioma</label>
+                <select name="language_code" id="language_code">
+                    <option value="pt_BR">Português (Brasil)</option>
+                    <option value="en_US">English (US)</option>
+                    <option value="es">Español</option>
+                </select>
+            </div>
+
+            <div id="parametersSection" style="display: none;">
+                <h4>Parâmetros do Template</h4>
+                <div id="parametersContainer"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="sendTemplateBtn" class="btn btn-primary" {% if not whatsapp_enabled %}disabled{% endif %}>
+                    Enviar Template
+                </button>
+            </div>
+        </form>
+
+        <div id="resultMessage" style="display: none; margin-top: 1rem;"></div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Templates Disponíveis</h3>
+        
+        <div class="template-info">
+            <h4>hello_world</h4>
+            <p><em>Template de teste padrão sem variáveis</em></p>
+            <p><strong>Uso:</strong> Primeiro teste de integração</p>
+        </div>
+
+        <div class="template-info">
+            <h4>appointment_reminder</h4>
+            <p><em>Lembrete de consulta agendada</em></p>
+            <p><strong>Variáveis:</strong></p>
+            <ul>
+                <li>{{1}} - Nome do veterinário</li>
+                <li>{{2}} - Data da consulta</li>
+                <li>{{3}} - Hora da consulta</li>
+            </ul>
+        </div>
+
+        <div class="template-info">
+            <h4>appointment_confirmation</h4>
+            <p><em>Confirmação após agendamento</em></p>
+            <p><strong>Variáveis:</strong></p>
+            <ul>
+                <li>{{1}} - Nome do pet</li>
+                <li>{{2}} - Tipo de consulta</li>
+                <li>{{3}} - Data e hora</li>
+            </ul>
+        </div>
+
+        <div class="template-info">
+            <h4>exam_ready</h4>
+            <p><em>Aviso de resultado disponível</em></p>
+            <p><strong>Variáveis:</strong></p>
+            <ul>
+                <li>{{1}} - Nome do tutor</li>
+                <li>{{2}} - Nome do pet</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+const templateParams = {
+    'appointment_reminder': ['Nome do Veterinário', 'Data (dd/mm/yyyy)', 'Hora (HH:MM)'],
+    'appointment_confirmation': ['Nome do Pet', 'Tipo de Consulta', 'Data e Hora'],
+    'exam_ready': ['Nome do Tutor', 'Nome do Pet'],
+    'vaccine_reminder': ['Nome do Pet', 'Tipo de Vacina', 'Data Limite'],
+    'pet_birthday': ['Nome do Pet', 'Idade']
+};
+
+document.getElementById('template_name').addEventListener('change', function() {
+    const templateName = this.value;
+    const paramsSection = document.getElementById('parametersSection');
+    const paramsContainer = document.getElementById('parametersContainer');
+    
+    if (templateParams[templateName]) {
+        paramsContainer.innerHTML = '';
+        templateParams[templateName].forEach((label, index) => {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            div.innerHTML = `
+                <label>Parâmetro ${index + 1}: ${label}</label>
+                <input type="text" name="param_${index}" class="template-param" required />
+            `;
+            paramsContainer.appendChild(div);
+        });
+        paramsSection.style.display = 'block';
+    } else {
+        paramsSection.style.display = 'none';
+    }
+});
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+document.getElementById('sendTemplateBtn').addEventListener('click', async function() {
+    const form = document.getElementById('templateForm');
+    const formData = new FormData(form);
+    const conversationId = formData.get('conversation_id');
+    const templateName = formData.get('template_name');
+    const languageCode = formData.get('language_code');
+    
+    if (!conversationId || !templateName) {
+        alert('Por favor, selecione uma conversa e um template.');
+        return;
+    }
+
+    const payload = {
+        conversation_id: parseInt(conversationId),
+        template_name: templateName,
+        language_code: languageCode
+    };
+
+    const params = [];
+    const paramInputs = document.querySelectorAll('.template-param');
+    paramInputs.forEach(input => {
+        params.push({ type: 'text', text: input.value });
+    });
+
+    if (params.length > 0) {
+        payload.components = [{
+            type: 'body',
+            parameters: params
+        }];
+    }
+
+    const resultDiv = document.getElementById('resultMessage');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<p>Enviando template...</p>';
+    resultDiv.className = 'info-box';
+
+    try {
+        const response = await fetch('/api/whatsapp/send-template/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            resultDiv.className = 'success-box';
+            resultDiv.innerHTML = `
+                <strong>✅ Template enviado com sucesso!</strong>
+                <p>ID da mensagem: ${data.message_id}</p>
+                <p>WhatsApp ID: ${data.external_id}</p>
+            `;
+            form.reset();
+            document.getElementById('parametersSection').style.display = 'none';
+        } else {
+            resultDiv.className = 'error-box';
+            resultDiv.innerHTML = `<strong>❌ Erro ao enviar:</strong><p>${data.error || JSON.stringify(data)}</p>`;
+        }
+    } catch (error) {
+        resultDiv.className = 'error-box';
+        resultDiv.innerHTML = `<strong>❌ Erro:</strong><p>${error.message}</p>`;
+    }
+});
+</script>
+{% endblock %}

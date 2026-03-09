@@ -1,0 +1,77 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Editar Conversa - NeoChat{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Editar Conversa #{{ object.id }}</h2>
+</div>
+
+<div class="card">
+    <form method="post" class="form">
+        {% csrf_token %}
+        
+        <h3>Informações do Cliente</h3>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_customer_name">Nome do Tutor *</label>
+                {{ form.customer_name }}
+                {% if form.customer_name.errors %}
+                <span class="error">{{ form.customer_name.errors.0 }}</span>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="id_pet_name">Nome do Pet</label>
+                {{ form.pet_name }}
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_customer_phone">Telefone</label>
+                {{ form.customer_phone }}
+            </div>
+            <div class="form-group">
+                <label for="id_customer_email">Email</label>
+                {{ form.customer_email }}
+            </div>
+        </div>
+
+        <hr />
+        <h3>Configurações da Conversa</h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_channel">Canal *</label>
+                {{ form.channel }}
+            </div>
+            <div class="form-group">
+                <label for="id_status">Status *</label>
+                {{ form.status }}
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_priority">Prioridade *</label>
+                {{ form.priority }}
+            </div>
+            <div class="form-group">
+                <label for="id_assigned_to">Atribuir a</label>
+                {{ form.assigned_to }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_subject">Assunto</label>
+            {{ form.subject }}
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'conversation-detail' object.pk %}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

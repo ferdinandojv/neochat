@@ -1,0 +1,182 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Conversa #{{ conversation.id }} - NeoChat{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Conversa #{{ conversation.id }}</h2>
+    <div class="page-actions">
+        <a href="{% url 'conversation-edit' conversation.pk %}" class="btn btn-primary">Editar</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Abrir Chat</a>
+    </div>
+</div>
+
+<div class="detail-layout">
+    <div class="detail-main">
+        <div class="card">
+            <h3>Informações do Cliente</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Nome do Tutor</span>
+                    <span class="detail-value">{{ conversation.customer_name }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Nome do Pet</span>
+                    <span class="detail-value">{{ conversation.pet_name|default:"-" }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Telefone</span>
+                    <span class="detail-value">{{ conversation.customer_phone|default:"-" }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">{{ conversation.customer_email|default:"-" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Histórico de Mensagens ({{ messages.count }})</h3>
+            <div class="message-history">
+                {% for msg in messages %}
+                <div class="history-message {% if msg.sender_type == 'agent' %}message-agent{% else %}message-customer{% endif %}">
+                    <div class="message-header">
+                        <strong>
+                            {% if msg.sender_type == 'agent' %}
+                                {{ msg.sender_user.username|default:"Atendente" }}
+                            {% elif msg.sender_type == 'customer' %}
+                                Cliente
+                            {% else %}
+                                Sistema
+                            {% endif %}
+                        </strong>
+                        <span class="message-time">{{ msg.created_at|date:"d/m/Y H:i:s" }}</span>
+                    </div>
+                    <div class="message-content">{{ msg.content }}</div>
+                    {% if msg.external_status %}
+                    <small class="message-status">Status: {{ msg.external_status }}</small>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-muted">Nenhuma mensagem ainda.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-sidebar">
+        <div class="card">
+            <h3>Detalhes da Conversa</h3>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Canal</span>
+                    <span class="detail-value">
+                        <span class="badge badge-channel-{{ conversation.channel }}">{{ conversation.get_channel_display }}</span>
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">
+                        <span class="badge badge-status-{{ conversation.status }}">{{ conversation.get_status_display }}</span>
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Prioridade</span>
+                    <span class="detail-value">
+                        <span class="badge badge-priority-{{ conversation.priority }}">{{ conversation.get_priority_display }}</span>
+                    </span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Assunto</span>
+                    <span class="detail-value">{{ conversation.subject|default:"-" }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Atribuído a</span>
+                    <span class="detail-value">{{ conversation.assigned_to.username|default:"Não atribuído" }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Criado por</span>
+                    <span class="detail-value">{{ conversation.created_by.username|default:"-" }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Criado em</span>
+                    <span class="detail-value">{{ conversation.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+
+                <div class="detail-item">
+                    <span class="detail-label">Última atualização</span>
+                    <span class="detail-value">{{ conversation.updated_at|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Transferencia</h3>
+            {% if can_transfer %}
+            <form method="post" action="{% url 'conversation-transfer' conversation.pk %}" class="transfer-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_assigned_to">Transferir para</label>
+                    <select id="id_assigned_to" name="assigned_to" required>
+                        <option value="">Selecione um usuario</option>
+                        {% for user_obj in users %}
+                        <option value="{{ user_obj.id }}" {% if conversation.assigned_to_id == user_obj.id %}selected{% endif %}>
+                            {{ user_obj.get_full_name|default:user_obj.username }} ({{ user_obj.get_role_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_reason">Motivo (opcional)</label>
+                    <textarea id="id_reason" name="reason" rows="3" placeholder="Ex.: troca de turno, especialidade, prioridade..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Transferir Conversa</button>
+            </form>
+            {% else %}
+            <p class="text-muted">Voce nao possui permissao para transferir esta conversa.</p>
+            {% endif %}
+        </div>
+
+        {% if transfer_history %}
+        <div class="card">
+            <h3>Historico de Transferencias</h3>
+            <div class="message-history">
+                {% for item in transfer_history|dictsortreversed:"transferred_at" %}
+                <div class="history-message message-system">
+                    <div class="message-header">
+                        <strong>{{ item.by|default:"sistema" }}</strong>
+                        <span class="message-time">{{ item.transferred_at|date:"d/m/Y H:i:s" }}</span>
+                    </div>
+                    <div class="message-content">
+                        De <strong>{{ item.from|default:"Nao atribuido" }}</strong>
+                        para <strong>{{ item.to|default:"Nao atribuido" }}</strong>
+                    </div>
+                    {% if item.reason %}
+                    <small class="message-status">Motivo: {{ item.reason }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if conversation.channel == 'whatsapp' %}
+        <div class="card">
+            <h3>WhatsApp</h3>
+            <a href="{% url 'whatsapp-templates' %}?conversation={{ conversation.pk }}" class="btn btn-primary btn-block">
+                Enviar Template
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

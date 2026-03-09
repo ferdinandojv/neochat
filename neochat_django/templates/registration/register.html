@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NeoChat | Criar Conta</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f7f5ee 0%, #f0f4f8 100%);
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            color: #1f2937;
+            padding: 20px;
+        }
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 15px 35px rgba(31, 41, 55, 0.12);
+            padding: 28px;
+        }
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem;
+        }
+        p {
+            margin: 0 0 22px;
+            color: #4b5563;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        input, select {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 11px;
+            font-size: 0.95rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0e7490;
+            box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.1);
+        }
+        button {
+            width: 100%;
+            border: 0;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            background: #0e7490;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+        button:hover {
+            background: #0c5f75;
+        }
+        .error {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            color: #b91c1c;
+            font-size: 0.9rem;
+        }
+        .error ul {
+            margin: 5px 0 0;
+            padding-left: 20px;
+        }
+        .help-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #4b5563;
+            font-size: 0.9rem;
+        }
+        .login-link a {
+            color: #0e7490;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>NeoChat</h1>
+        <p>Criar nova conta</p>
+
+        {% if form.errors %}
+        <div class="error">
+            <strong>Por favor, corrija os erros abaixo:</strong>
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_username">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.help_text %}
+                    <div class="help-text">{{ form.username.help_text }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_email">{{ form.email.label }}</label>
+                {{ form.email }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_first_name">{{ form.first_name.label }}</label>
+                {{ form.first_name }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_last_name">{{ form.last_name.label }}</label>
+                {{ form.last_name }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_phone">{{ form.phone.label }} (opcional)</label>
+                {{ form.phone }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password1">{{ form.password1.label }}</label>
+                {{ form.password1 }}
+                {% if form.password1.help_text %}
+                    <div class="help-text">{{ form.password1.help_text }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_password2">{{ form.password2.label }}</label>
+                {{ form.password2 }}
+                {% if form.password2.help_text %}
+                    <div class="help-text">{{ form.password2.help_text }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit">Criar Conta</button>
+        </form>
+
+        <div class="login-link">
+            Já tem uma conta? <a href="{% url 'login' %}">Fazer login</a>
+        </div>
+    </div>
+</body>
+</html>

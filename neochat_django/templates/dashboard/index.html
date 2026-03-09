@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NeoChat | Chat em Tempo Real</title>
+    <link rel="stylesheet" href="{% static 'dashboard/style.css' %}" />
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <h1>NeoChat</h1>
+            <small>{{ user.get_full_name|default:user.username }} ({{ user.get_role_display }})</small>
+        </div>
+        <nav class="topbar-nav">
+            <a href="{% url 'dashboard' %}" style="background: var(--brand-soft);">Chat</a>
+            <a href="{% url 'conversations' %}">Conversas</a>
+            <a href="{% url 'users' %}">Usuários</a>
+            <a href="{% url 'whatsapp-templates' %}">Templates</a>
+            <a href="{% url 'admin:index' %}">Admin</a>
+            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">Sair</button>
+            </form>
+        </nav>
+    </header>
+
+    <main class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-head">
+                <h2>Conversas</h2>
+                <button id="newConversationBtn" type="button">+ Nova</button>
+            </div>
+            <div id="conversationList" class="conversation-list"></div>
+        </aside>
+
+        <section class="chat">
+            <div id="chatHeader" class="chat-header">Selecione uma conversa</div>
+            <div id="messageList" class="message-list"></div>
+            <form id="messageForm" class="message-form">
+                {% csrf_token %}
+                <input id="messageInput" type="text" placeholder="Digite sua mensagem..." disabled />
+                <button type="submit" id="sendBtn" disabled>Enviar</button>
+            </form>
+        </section>
+    </main>
+
+    <dialog id="newConversationDialog">
+        <form id="newConversationForm" method="dialog" class="dialog-form">
+            {% csrf_token %}
+            <h3>Nova Conversa</h3>
+            <label>Nome do tutor</label>
+            <input name="customer_name" required />
+            <label>Nome do pet</label>
+            <input name="pet_name" />
+            <label>Canal</label>
+            <select name="channel">
+                <option value="whatsapp">WhatsApp</option>
+                <option value="web">Web</option>
+                <option value="email">Email</option>
+                <option value="phone">Telefone</option>
+            </select>
+            <label>Telefone</label>
+            <input name="customer_phone" />
+            <div class="dialog-actions">
+                <button value="cancel">Cancelar</button>
+                <button type="submit">Criar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="{% static 'dashboard/app.js' %}"></script>
+</body>
+</html>
