@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: neochat-web
+    env: python
+    region: ohio
+    plan: free
+    buildCommand: >
+      pip install -r neochat_django/requirements.txt &&
+      cd neochat_django &&
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput
+    startCommand: >
+      cd neochat_django &&
+      daphne -b 0.0.0.0 -p $PORT neochat_django.asgi:application
+    envVars:
+      - key: DJANGO_ENV
+        value: production
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: neochat-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: neochat-redis
+          type: redis
+          property: connectionString
+
+  - type: pserv
+    name: neochat-postgres
+    ipAllowList: []
+    plan: free
+    postgresVersion: "16"
+    initialDatabase: neochat
+    user: neochat_user
+    password:
+      generateValue: true
+
+  - type: redis
+    name: neochat-redis
+    ipAllowList: []
+    plan: free
+    maxmemoryPolicy: allkeys-lru
